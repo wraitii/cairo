@@ -546,6 +546,29 @@ impl<'a> Parser<'a> {
         let name = self.parse_identifier();
         let generic_params = self.parse_optional_generic_params();
 
+        if self.peek().kind == SyntaxKind::TerminalLBrace {
+            let lbrace = self.take::<TerminalLBrace>();
+            let items = ItemList::new_green(
+                self.db,
+                self.parse_attributed_list(
+                    Self::try_parse_top_level_item,
+                    is_of_kind!(rbrace),
+                    "item",
+                ),
+            );
+            let rbrace = self.parse_token::<TerminalRBrace>();
+            let body = ImplBody::new_green(self.db, lbrace, items, rbrace);
+            return ItemAnonymousImpl::new_green(
+                self.db,
+                attributes,
+                impl_kw,
+                name,
+                generic_params,
+                body,
+            )
+            .into();
+        }
+
         if self.peek().kind == SyntaxKind::TerminalEq {
             let eq = self.take::<TerminalEq>();
             let impl_path = self.parse_type_path();

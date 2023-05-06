@@ -7492,6 +7492,7 @@ pub enum Item {
     ExternType(ItemExternType),
     Trait(ItemTrait),
     Impl(ItemImpl),
+    AnonymousImpl(ItemAnonymousImpl),
     ImplAlias(ItemImplAlias),
     Struct(ItemStruct),
     Enum(ItemEnum),
@@ -7541,6 +7542,11 @@ impl From<ItemTraitPtr> for ItemPtr {
 }
 impl From<ItemImplPtr> for ItemPtr {
     fn from(value: ItemImplPtr) -> Self {
+        Self(value.0)
+    }
+}
+impl From<ItemAnonymousImplPtr> for ItemPtr {
+    fn from(value: ItemAnonymousImplPtr) -> Self {
         Self(value.0)
     }
 }
@@ -7604,6 +7610,11 @@ impl From<ItemImplGreen> for ItemGreen {
         Self(value.0)
     }
 }
+impl From<ItemAnonymousImplGreen> for ItemGreen {
+    fn from(value: ItemAnonymousImplGreen) -> Self {
+        Self(value.0)
+    }
+}
 impl From<ItemImplAliasGreen> for ItemGreen {
     fn from(value: ItemImplAliasGreen) -> Self {
         Self(value.0)
@@ -7650,6 +7661,9 @@ impl TypedSyntaxNode for Item {
             }
             SyntaxKind::ItemTrait => Item::Trait(ItemTrait::from_syntax_node(db, node)),
             SyntaxKind::ItemImpl => Item::Impl(ItemImpl::from_syntax_node(db, node)),
+            SyntaxKind::ItemAnonymousImpl => {
+                Item::AnonymousImpl(ItemAnonymousImpl::from_syntax_node(db, node))
+            }
             SyntaxKind::ItemImplAlias => Item::ImplAlias(ItemImplAlias::from_syntax_node(db, node)),
             SyntaxKind::ItemStruct => Item::Struct(ItemStruct::from_syntax_node(db, node)),
             SyntaxKind::ItemEnum => Item::Enum(ItemEnum::from_syntax_node(db, node)),
@@ -7667,6 +7681,7 @@ impl TypedSyntaxNode for Item {
             Item::ExternType(x) => x.as_syntax_node(),
             Item::Trait(x) => x.as_syntax_node(),
             Item::Impl(x) => x.as_syntax_node(),
+            Item::AnonymousImpl(x) => x.as_syntax_node(),
             Item::ImplAlias(x) => x.as_syntax_node(),
             Item::Struct(x) => x.as_syntax_node(),
             Item::Enum(x) => x.as_syntax_node(),
@@ -7692,6 +7707,7 @@ impl Item {
             SyntaxKind::ItemExternType => true,
             SyntaxKind::ItemTrait => true,
             SyntaxKind::ItemImpl => true,
+            SyntaxKind::ItemAnonymousImpl => true,
             SyntaxKind::ItemImplAlias => true,
             SyntaxKind::ItemStruct => true,
             SyntaxKind::ItemEnum => true,
@@ -9469,6 +9485,109 @@ impl TypedSyntaxNode for ImplBody {
     }
     fn stable_ptr(&self) -> Self::StablePtr {
         ImplBodyPtr(self.node.0.stable_ptr)
+    }
+}
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct ItemAnonymousImpl {
+    node: SyntaxNode,
+    children: Vec<SyntaxNode>,
+}
+impl ItemAnonymousImpl {
+    pub const INDEX_ATTRIBUTES: usize = 0;
+    pub const INDEX_IMPL_KW: usize = 1;
+    pub const INDEX_TRAIT_PATH: usize = 2;
+    pub const INDEX_GENERIC_PARAMS: usize = 3;
+    pub const INDEX_BODY: usize = 4;
+    pub fn new_green(
+        db: &dyn SyntaxGroup,
+        attributes: AttributeListGreen,
+        impl_kw: TerminalImplGreen,
+        trait_path: TerminalIdentifierGreen,
+        generic_params: OptionWrappedGenericParamListGreen,
+        body: ImplBodyGreen,
+    ) -> ItemAnonymousImplGreen {
+        let children: Vec<GreenId> =
+            vec![attributes.0, impl_kw.0, trait_path.0, generic_params.0, body.0];
+        let width = children.iter().copied().map(|id| db.lookup_intern_green(id).width()).sum();
+        ItemAnonymousImplGreen(db.intern_green(GreenNode {
+            kind: SyntaxKind::ItemAnonymousImpl,
+            details: GreenNodeDetails::Node { children, width },
+        }))
+    }
+}
+impl ItemAnonymousImpl {
+    pub fn attributes(&self, db: &dyn SyntaxGroup) -> AttributeList {
+        AttributeList::from_syntax_node(db, self.children[0].clone())
+    }
+    pub fn impl_kw(&self, db: &dyn SyntaxGroup) -> TerminalImpl {
+        TerminalImpl::from_syntax_node(db, self.children[1].clone())
+    }
+    pub fn trait_path(&self, db: &dyn SyntaxGroup) -> TerminalIdentifier {
+        TerminalIdentifier::from_syntax_node(db, self.children[2].clone())
+    }
+    pub fn generic_params(&self, db: &dyn SyntaxGroup) -> OptionWrappedGenericParamList {
+        OptionWrappedGenericParamList::from_syntax_node(db, self.children[3].clone())
+    }
+    pub fn body(&self, db: &dyn SyntaxGroup) -> ImplBody {
+        ImplBody::from_syntax_node(db, self.children[4].clone())
+    }
+}
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct ItemAnonymousImplPtr(pub SyntaxStablePtrId);
+impl ItemAnonymousImplPtr {
+    pub fn trait_path_green(self, db: &dyn SyntaxGroup) -> TerminalIdentifierGreen {
+        let ptr = db.lookup_intern_stable_ptr(self.0);
+        if let SyntaxStablePtr::Child { key_fields, .. } = ptr {
+            TerminalIdentifierGreen(key_fields[0])
+        } else {
+            panic!("Unexpected key field query on root.");
+        }
+    }
+    pub fn untyped(&self) -> SyntaxStablePtrId {
+        self.0
+    }
+}
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct ItemAnonymousImplGreen(pub GreenId);
+impl TypedSyntaxNode for ItemAnonymousImpl {
+    const OPTIONAL_KIND: Option<SyntaxKind> = Some(SyntaxKind::ItemAnonymousImpl);
+    type StablePtr = ItemAnonymousImplPtr;
+    type Green = ItemAnonymousImplGreen;
+    fn missing(db: &dyn SyntaxGroup) -> Self::Green {
+        ItemAnonymousImplGreen(db.intern_green(GreenNode {
+            kind: SyntaxKind::ItemAnonymousImpl,
+            details: GreenNodeDetails::Node {
+                children: vec![
+                    AttributeList::missing(db).0,
+                    TerminalImpl::missing(db).0,
+                    TerminalIdentifier::missing(db).0,
+                    OptionWrappedGenericParamList::missing(db).0,
+                    ImplBody::missing(db).0,
+                ],
+                width: TextWidth::default(),
+            },
+        }))
+    }
+    fn from_syntax_node(db: &dyn SyntaxGroup, node: SyntaxNode) -> Self {
+        let kind = node.kind(db);
+        assert_eq!(
+            kind,
+            SyntaxKind::ItemAnonymousImpl,
+            "Unexpected SyntaxKind {:?}. Expected {:?}.",
+            kind,
+            SyntaxKind::ItemAnonymousImpl
+        );
+        let children = node.children(db).collect();
+        Self { node, children }
+    }
+    fn from_ptr(db: &dyn SyntaxGroup, root: &SyntaxFile, ptr: Self::StablePtr) -> Self {
+        Self::from_syntax_node(db, root.as_syntax_node().lookup_ptr(db, ptr.0))
+    }
+    fn as_syntax_node(&self) -> SyntaxNode {
+        self.node.clone()
+    }
+    fn stable_ptr(&self) -> Self::StablePtr {
+        ItemAnonymousImplPtr(self.node.0.stable_ptr)
     }
 }
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]

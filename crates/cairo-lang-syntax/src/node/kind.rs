@@ -85,6 +85,7 @@ pub enum SyntaxKind {
     TraitItemFunction,
     ItemImpl,
     ImplBody,
+    ItemAnonymousImpl,
     ItemImplAlias,
     ItemStruct,
     ItemEnum,

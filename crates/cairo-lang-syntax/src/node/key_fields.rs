@@ -223,6 +223,9 @@ pub fn get_key_fields(kind: SyntaxKind, children: Vec<GreenId>) -> Vec<GreenId> 
         SyntaxKind::ImplBody => {
             vec![]
         }
+        SyntaxKind::ItemAnonymousImpl => {
+            vec![/* trait_path */ children[2]]
+        }
         SyntaxKind::ItemImplAlias => {
             vec![/* name */ children[2]]
         }

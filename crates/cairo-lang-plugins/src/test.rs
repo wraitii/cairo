@@ -18,6 +18,7 @@ cairo_lang_test_utils::test_file_test!(
         config: "config",
         derive: "derive",
         panicable: "panicable",
+        structimpl: "structimpl",
     },
     test_expand_plugin
 );

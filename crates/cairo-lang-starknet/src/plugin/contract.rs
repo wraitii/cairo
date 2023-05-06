@@ -73,6 +73,7 @@ pub fn handle_mod(db: &dyn SyntaxGroup, module_ast: ast::ItemModule) -> PluginRe
                 None
             }
             ast::Item::Impl(item) => Some(item.name(db)),
+            ast::Item::AnonymousImpl(_) => None,
             ast::Item::Struct(item) => Some(item.name(db)),
             ast::Item::Enum(item) => Some(item.name(db)),
             ast::Item::TypeAlias(item) => Some(item.name(db)),

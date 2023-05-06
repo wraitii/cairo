@@ -396,6 +396,10 @@ fn priv_module_data(db: &dyn DefsGroup, module_id: ModuleId) -> Maybe<ModuleData
                     res.impls.insert(item_id, imp);
                     ModuleItemId::Impl(item_id)
                 }
+                ast::Item::AnonymousImpl(_imp) => {
+                    // TODO: diagnostics
+                    continue;
+                }
                 ast::Item::Struct(structure) => {
                     let item_id =
                         db.intern_struct(StructLongId(module_file_id, structure.stable_ptr()));

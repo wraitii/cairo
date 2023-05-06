@@ -1,0 +1,114 @@
+//! > ==========================================================================
+
+//! > Test expansion of structimpl plugin
+
+//! > test_runner_name
+test_expand_plugin
+
+//! > cairo_code
+struct SomeStruct {}
+impl SomeStruct {
+    fn foo(self: SomeStruct) -> felt252 {
+        0
+    }
+}
+
+
+struct SomeOtherStruct {}
+impl SomeOtherStruct {
+    fn foo(self: SomeOtherStruct) -> felt252 {
+        0
+    }
+    fn foo2(self: SomeOtherStruct) -> felt252 {
+        1
+    }
+}
+
+struct SomeGenericStruct<T> {}
+impl SomeGenericStruct<T> {
+    fn foo(self: SomeGenericStruct<T>) -> felt252 {
+        0
+    }
+}
+impl SomeGenericStruct<felt252> {
+    fn foo(self: SomeGenericStruct<felt252>) -> felt252 {
+        0
+    }
+}
+
+
+struct SomeGenericStruct<T> {}
+impl SomeGenericStruct<T, impl TD: D<T>> {
+    fn foo(self: SomeGenericStruct<T>) -> felt252 {
+        0
+    }
+}
+
+//! > generated_cairo_code
+struct SomeStruct {}
+
+trait SomeStructMethods<> {
+    fn foo(self: SomeStruct) -> felt252;
+}
+impl SomeStructImpl<> of SomeStructMethods<> {
+    fn foo(self: SomeStruct) -> felt252 {
+        0
+    }
+}
+
+
+
+
+struct SomeOtherStruct {}
+
+trait SomeOtherStructMethods<> {
+    fn foo(self: SomeOtherStruct) -> felt252;
+    fn foo2(self: SomeOtherStruct) -> felt252;
+}
+impl SomeOtherStructImpl<> of SomeOtherStructMethods<> {
+    fn foo(self: SomeOtherStruct) -> felt252 {
+        0
+    }
+    fn foo2(self: SomeOtherStruct) -> felt252 {
+        1
+    }
+}
+
+
+
+struct SomeGenericStruct<T> {}
+
+trait SomeGenericStructMethods<T> {
+    fn foo(self: SomeGenericStruct<T>) -> felt252;
+}
+impl SomeGenericStructImpl<T, > of SomeGenericStructMethods<T> {
+    fn foo(self: SomeGenericStruct<T>) -> felt252 {
+        0
+    }
+}
+
+
+trait SomeGenericStructMethods<felt252> {
+    fn foo(self: SomeGenericStruct<felt252>) -> felt252;
+}
+impl SomeGenericStructImpl<felt252, > of SomeGenericStructMethods<felt252> {
+    fn foo(self: SomeGenericStruct<felt252>) -> felt252 {
+        0
+    }
+}
+
+
+
+
+struct SomeGenericStruct<T> {}
+
+trait SomeGenericStructMethods<T> {
+    fn foo(self: SomeGenericStruct<T>) -> felt252;
+}
+impl SomeGenericStructImpl<T, impl TD: D<T>, > of SomeGenericStructMethods<T> {
+    fn foo(self: SomeGenericStruct<T>) -> felt252 {
+        0
+    }
+}
+
+//! > expected_diagnostics

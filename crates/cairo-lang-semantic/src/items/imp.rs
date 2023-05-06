@@ -419,6 +419,9 @@ pub fn priv_impl_definition_data(
                 Item::Impl(imp) => {
                     report_invalid_impl_item(syntax_db, &mut diagnostics, imp.impl_kw(syntax_db))
                 }
+                Item::AnonymousImpl(imp) => {
+                    report_invalid_impl_item(syntax_db, &mut diagnostics, imp.impl_kw(syntax_db))
+                }
                 Item::Struct(structure) => report_invalid_impl_item(
                     syntax_db,
                     &mut diagnostics,
